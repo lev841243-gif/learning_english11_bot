@@ -214,19 +214,18 @@ def handle_answer(message):
     if user_answer in [Command.NEXT, Command.ADD_WORD, Command.DELETE_WORD]:
         return
 
-    # Получаем данные из состояния
     with bot.retrieve_data(user_id, cid) as data:
         if not data or 'target_word' not in data:
-            # Если нет состояния, показываем новую карточку
             show_next_card(message)
             return
 
         target_word = data['target_word']
         translate_word = data['translate_word']
+        options = data['options']
 
         if user_answer == target_word:
             # Правильный ответ
-            response = f"✅ Отлично!\n{show_target(data)}"
+            response = f"✅ Отлично! Правильно!\n{show_target(data)}"
 
             # Создаем клавиатуру для следующего действия
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -240,21 +239,22 @@ def handle_answer(message):
             bot.send_message(cid, response, reply_markup=markup)
 
         else:
-            # Неправильный ответ
-            response = f"❌ Неправильно!\nПравильный ответ: {target_word} -> {translate_word}"
+            # Неправильный ответ - предлагаем попробовать снова
+            response = f"❌ Неправильно! Попробуйте ещё раз вспомнить слово:\n🇷🇺 {translate_word}"
 
-            # Создаем клавиатуру с пометкой ошибки
+            # Создаем ту же клавиатуру, но помечаем неправильный ответ
             markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
 
             # Обновляем кнопки, помечая неправильный ответ
             new_buttons = []
-            for option in data['options']:
+            for option in options:
                 if option == user_answer:
+                    # Помечаем неправильный ответ
                     new_buttons.append(types.KeyboardButton(option + ' ❌'))
                 else:
                     new_buttons.append(types.KeyboardButton(option))
 
-            # Перемешиваем кнопки заново
+            # Перемешиваем кнопки заново, чтобы неправильный ответ не всегда был на одном месте
             random.shuffle(new_buttons)
 
             # Добавляем служебные кнопки
@@ -266,6 +266,13 @@ def handle_answer(message):
                 types.KeyboardButton(Command.ADD_WORD),
                 types.KeyboardButton(Command.DELETE_WORD)
             )
+
+            # Сохраняем состояние для повторной попытки
+            bot.set_state(user_id, MyStates.target_word, cid)
+            with bot.retrieve_data(user_id, cid) as data:
+                data['target_word'] = target_word
+                data['translate_word'] = translate_word
+                data['options'] = [btn.text.replace(' ❌', '') for btn in new_buttons if '❌' not in btn.text]
 
             # Отправляем результат с обновленной клавиатурой
             bot.send_message(cid, response, reply_markup=markup)
