@@ -6,5 +6,5 @@ DB_CONFIG = {
     'port': '5432'
 }
 
-BOT_TOKEN = '8562502899:AAFgFSrPT2Ayg4SDyhIzXxUP4oBe5w-TO0Y'  # пока можно оставить заглушку
+BOT_TOKEN = '8562502899:AAFgFSrPT2Ayg4SDyhIzXxUP4oBe5w-TO0Y'  # вставить свой токен
 #BOT_TOKEN = '8562502899:AAFgFSrPT2Ayg4SDyhIzXxUP4oBe5w-TO0Y'

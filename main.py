@@ -155,6 +155,7 @@ def process_english_word(message):
 
 
 @bot.message_handler(state=MyStates.add_word_russian)
+@bot.message_handler(state=MyStates.add_word_russian)
 def process_russian_word(message):
     cid = message.chat.id
     user_id = message.from_user.id
@@ -169,7 +170,10 @@ def process_russian_word(message):
 
     # Добавляем слово
     if db.add_custom_word(user_id, english_word, russian_word):
-        bot.send_message(cid, f"✅ Слово '{english_word}' -> '{russian_word}' успешно добавлено!")
+        # Получаем общее количество активных слов пользователя
+        words_count = db.get_user_active_words_count(user_id)
+        bot.send_message(cid,
+                         f"✅ Слово '{english_word}' -> '{russian_word}' успешно добавлено!\n\n📚 Теперь вы изучаете: {words_count} слов")
     else:
         bot.send_message(cid, "❌ Не удалось добавить слово. Попробуйте еще раз.")
 
@@ -177,6 +181,7 @@ def process_russian_word(message):
     show_next_card(message)
 
 
+@bot.message_handler(state=MyStates.delete_word)
 @bot.message_handler(state=MyStates.delete_word)
 def process_delete_word(message):
     cid = message.chat.id
@@ -189,7 +194,9 @@ def process_delete_word(message):
 
     # Удаляем слово
     if db.deactivate_user_word(user_id, word_to_delete):
-        bot.send_message(cid, f"✅ Слово '{word_to_delete}' удалено!")
+        # Получаем обновленное количество слов
+        words_count = db.get_user_active_words_count(user_id)
+        bot.send_message(cid, f"✅ Слово '{word_to_delete}' удалено!\n\n📚 Теперь вы изучаете: {words_count} слов")
     else:
         bot.send_message(cid, f"❌ Слово '{word_to_delete}' не найдено.")
 

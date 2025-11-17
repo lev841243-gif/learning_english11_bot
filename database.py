@@ -322,3 +322,28 @@ class Database:
         if self._is_connected():
             self._connection.close()
             print("✓ Database connection closed")
+
+    def get_user_active_words_count(self, user_id):
+        """Получает количество активных слов пользователя (общие + персональные)"""
+        if not self._ensure_connection():
+            return 0
+
+        try:
+            cursor = self._connection.cursor()
+
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM words w
+                LEFT JOIN user_words uw ON w.word_id = uw.word_id AND uw.user_id = %s
+                WHERE (w.is_common = TRUE OR (uw.user_id = %s AND uw.is_active = TRUE))
+                AND (uw.is_active IS NULL OR uw.is_active = TRUE)
+            """, (user_id, user_id))
+
+            count = cursor.fetchone()[0]
+            cursor.close()
+
+            return count
+
+        except Exception as e:
+            print(f"✗ Error getting user active words count: {e}")
+            return 0
